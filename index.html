@@ -4,11 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="referrer" content="no-referrer">
-  <title>Zen Dashboard (Glass UI)</title>
-  
+  <title>Zen Dashboard (Final)</title>
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  </head>
+</head>
 <body class="mode-sietch">
   
   <div class="dashboard-grid">
@@ -81,8 +80,7 @@
           </div>
         </div>
       </div> 
-      
-      </div>
+    </div>
 
     <div class="coluna-direita">
       
@@ -111,12 +109,9 @@
       </div>
 
     </div> 
-
   </div>
 
   <script>
-    // --- (JavaScript SEM a parte do gráfico) ---
-
     const chatMessages = document.getElementById('chat-messages');
     const chatInput = document.getElementById('chat-input');
     const chatSendButton = document.getElementById('chat-send');
@@ -131,15 +126,15 @@
       Atreides: ["https://i.imgur.com/HwidxCi.jpeg", "https://i.imgur.com/9xT18cO.jpeg", "https://i.imgur.com/s1A3ehb.jpeg"]
     };
 
-    const socket = new WebSocket(`ws://localhost:3000`);
+    // WebSocket: Usa o protocolo seguro (wss) se estiver em HTTPS (Render), ou ws se for local
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const socket = new WebSocket(`${protocol}://${window.location.host}`);
     
     socket.onmessage = (event) => {
       let data;
       try { data = JSON.parse(event.data); } catch (e) { return; }
 
-      if (data.luz !== undefined) { 
-        atualizarSensores(data);
-      }
+      if (data.luz !== undefined) { atualizarSensores(data); }
       else if (data.sender === "Alpha Centauri") { adicionarMensagemChat("ia", data.message); } 
       else if (data.sender === "Servidor") { adicionarMensagemChat("server", data.message); }
       else if (data.sender === "Spotify") { atualizarSpotify(data); }
@@ -149,7 +144,6 @@
     function atualizarSensores(data) {
       const tempEl = document.getElementById('temp_valor');
       const humEl = document.getElementById('hum_valor');
-      
       if (data.temp === null || data.temp === undefined) {
         tempEl.textContent = "--"; humEl.textContent = "--";
       } else {
@@ -185,10 +179,7 @@
 
       const lista = fotosDuna[novoModo];
       if (lista && lista.length > 0) {
-        if (dunaImage) {
-            const randomImg = lista[Math.floor(Math.random() * lista.length)];
-            dunaImage.src = randomImg;
-        }
+        if (dunaImage) dunaImage.src = lista[Math.floor(Math.random() * lista.length)];
       }
     }
 
