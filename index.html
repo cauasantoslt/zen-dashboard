@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
+  <title>Zen Dashboard (Glass UI)</title>
+  
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  </head>
+<body class="mode-sietch">
+  
+  <div class="dashboard-grid">
+
+    <div class="coluna-esquerda">
+      
+      <div id="spotify-widget" class="widget glass-panel">
+        <div class="widget-header">
+          <h2><i class="fab fa-spotify"></i> Spotify <span></span></h2>
+        </div>
+        <div id="spotify-placeholder">
+          <p>Aguardando dados...</p>
+          <a href="/login" class="login-btn">Login</a>
+        </div>
+        <div class="spotify-player" id="spotify-player-content" style="display: none;">
+          <div class="spotify-album-art">
+            <img id="spotify-album-image" src="" alt="Capa">
+          </div>
+          <div class="spotify-track-info">
+            <div id="spotify-track-name">Música</div>
+            <div id="spotify-artist-name">Artista</div>
+          </div>
+          <div class="spotify-controls">
+            <button id="spotify-prev"><i class="fas fa-step-backward"></i></button>
+            <button id="spotify-play-pause" class="btn-play"><i class="fas fa-play"></i></button>
+            <button id="spotify-next"><i class="fas fa-step-forward"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <div id="sensores-widget" class="widget glass-panel">
+        <div class="widget-header">
+          <h2>Sensores <span></span></h2>
+        </div>
+        <div class="sensor-list">
+          <div class="sensor-card" id="box-luz">
+            <div class="icon-area"><i class="fas fa-lightbulb"></i></div>
+            <div class="info-area">
+              <span class="label">Luminosidade <span id="atividade_ponto" class="ponto-atividade inativo"></span></span>
+              <span id="luz_valor" class="valor">--</span>
+            </div>
+          </div>
+          <div class="sensor-card highlight-card" id="box-mode">
+            <div class="icon-area"><i class="fas fa-mountain"></i></div>
+            <div class="info-area">
+              <span class="label">Modo Atual</span>
+              <span id="mode_status" class="valor">--</span>
+            </div>
+          </div>
+          <div class="sensor-card" id="box-temp">
+            <div class="icon-area"><i class="fas fa-temperature-high"></i></div>
+            <div class="info-area">
+              <span class="label">Temperatura</span>
+              <span class="valor"><span id="temp_valor">--</span>°C</span>
+            </div>
+          </div>
+          <div class="sensor-card" id="box-hum">
+            <div class="icon-area"><i class="fas fa-tint"></i></div>
+            <div class="info-area">
+              <span class="label">Humidade</span>
+              <span class="valor"><span id="hum_valor">--</span>%</span>
+            </div>
+          </div>
+          <div class="sensor-card clock-card" id="box-relogio">
+            <div class="info-area">
+              <span class="label"><i class="far fa-clock"></i> Relógio</span>
+              <span id="relogio_valor" class="valor">--:--:--</span>
+              <div id="data_valor">--</div>
+            </div>
+          </div>
+        </div>
+      </div> 
+      
+      </div>
+
+    <div class="coluna-direita">
+      
+      <div id="chat-widget" class="widget glass-panel">
+        <div class="widget-header">
+          <h2>Alpha Centauri <span></span></h2>
+        </div>
+        <div id="status-ia-box">
+          <span class="label">Status do Ambiente</span>
+          <p id="ia_status_text">(Aguardando análise...)</p>
+        </div>
+        <div id="chat-messages"></div>
+        <div id="chat-input-box">
+          <input type="text" id="chat-input" placeholder="Pergunte algo...">
+          <button id="chat-send">Enviar</button>
+        </div>
+      </div>
+
+      <div id="foto-widget" class="widget glass-panel">
+        <div class="widget-header">
+          <h2>Visualização <span></span></h2>
+        </div>
+        <div class="foto-container">
+          <img id="duna-image" src="https://i.imgur.com/QXyJjWU.jpeg" alt="Duna">
+        </div>
+      </div>
+
+    </div> 
+
+  </div>
+
+  <script>
+    // --- (JavaScript SEM a parte do gráfico) ---
+
+    const chatMessages = document.getElementById('chat-messages');
+    const chatInput = document.getElementById('chat-input');
+    const chatSendButton = document.getElementById('chat-send');
+    const spotifyPlaceholder = document.getElementById('spotify-placeholder');
+    const spotifyPlayer = document.getElementById('spotify-player-content');
+    const spotifyPlayPause = document.getElementById('spotify-play-pause');
+    const dunaImage = document.getElementById('duna-image');
+
+    const fotosDuna = {
+      Sietch: ["https://i.imgur.com/QXyJjWU.jpeg", "https://i.imgur.com/3efJvFJ.jpeg", "https://i.imgur.com/lOt6QYO.jpeg"],
+      Arrakis: ["https://i.imgur.com/ldqDTOJ.jpeg", "https://i.imgur.com/nA974t8.jpeg", "https://i.imgur.com/Jsg2dpi.jpeg"],
+      Atreides: ["https://i.imgur.com/HwidxCi.jpeg", "https://i.imgur.com/9xT18cO.jpeg", "https://i.imgur.com/s1A3ehb.jpeg"]
+    };
+
+    const socket = new WebSocket(`ws://localhost:3000`);
+    
+    socket.onmessage = (event) => {
+      let data;
+      try { data = JSON.parse(event.data); } catch (e) { return; }
+
+      if (data.luz !== undefined) { 
+        atualizarSensores(data);
+      }
+      else if (data.sender === "Alpha Centauri") { adicionarMensagemChat("ia", data.message); } 
+      else if (data.sender === "Servidor") { adicionarMensagemChat("server", data.message); }
+      else if (data.sender === "Spotify") { atualizarSpotify(data); }
+      else if (data.sender === "IA_Status") { atualizarIAStatus(data.status); }
+    };
+
+    function atualizarSensores(data) {
+      const tempEl = document.getElementById('temp_valor');
+      const humEl = document.getElementById('hum_valor');
+      
+      if (data.temp === null || data.temp === undefined) {
+        tempEl.textContent = "--"; humEl.textContent = "--";
+      } else {
+        tempEl.textContent = data.temp; humEl.textContent = data.hum;
+      }
+      document.getElementById('luz_valor').textContent = data.luz;
+
+      const ponto = document.getElementById('atividade_ponto');
+      if (ponto && data.pir !== undefined) {
+         ponto.className = data.pir == 1 ? 'ponto-atividade ativo' : 'ponto-atividade inativo';
+      }
+      
+      document.getElementById('mode_status').textContent = data.mode;
+      atualizarTemaDuna(data.mode);
+    }
+    
+    let currentMode = "Sietch"; 
+    function hexToRgb(hex) {
+      const bigint = parseInt(hex.slice(1), 16);
+      const r = (bigint >> 16) & 255;
+      const g = (bigint >> 8) & 255;
+      const b = bigint & 255;
+      return `${r},${g},${b}`;
+    }
+
+    function atualizarTemaDuna(novoModo) {
+      if (novoModo === currentMode) return; 
+      currentMode = novoModo;
+      document.body.className = `mode-${novoModo.toLowerCase()}`;
+      
+      const accentColorHex = getComputedStyle(document.body).getPropertyValue('--accent-color');
+      document.body.style.setProperty('--accent-color-rgb', hexToRgb(accentColorHex));
+
+      const lista = fotosDuna[novoModo];
+      if (lista && lista.length > 0) {
+        if (dunaImage) {
+            const randomImg = lista[Math.floor(Math.random() * lista.length)];
+            dunaImage.src = randomImg;
+        }
+      }
+    }
+
+    function atualizarSpotify(data) {
+      if (data.name) {
+        spotifyPlaceholder.style.display = 'none';
+        spotifyPlayer.style.display = 'flex'; 
+        document.getElementById('spotify-track-name').textContent = data.name;
+        document.getElementById('spotify-artist-name').textContent = data.artist;
+        document.getElementById('spotify-album-image').src = data.image_url;
+        const icon = spotifyPlayPause.querySelector('i');
+        icon.className = data.is_playing ? 'fas fa-pause' : 'fas fa-play';
+      } else {
+        spotifyPlaceholder.style.display = 'block';
+        spotifyPlayer.style.display = 'none';
+      }
+    }
+    
+    function adicionarMensagemChat(tipo, msg) {
+      let classe = tipo === 'user' ? 'message-user' : (tipo === 'ia' ? 'message-ia' : 'message-server');
+      let prefixo = tipo === 'ia' ? '<i class="fas fa-star"></i> ' : ''; 
+      const div = document.createElement('div');
+      div.className = `chat-message ${classe}`;
+      div.innerHTML = `${prefixo}${msg}`;
+      chatMessages.appendChild(div);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function enviarMensagemChat() {
+      const msg = chatInput.value.trim();
+      if (!msg) return;
+      adicionarMensagemChat('user', msg);
+      socket.send(JSON.stringify({ chat: msg }));
+      chatInput.value = '';
+    }
+
+    function atualizarIAStatus(status) {
+      document.getElementById('ia_status_text').textContent = status;
+    }
+    
+    chatSendButton.addEventListener('click', enviarMensagemChat);
+    chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') enviarMensagemChat(); });
+
+    document.getElementById('spotify-play-pause').addEventListener('click', () => {
+      const icon = spotifyPlayPause.querySelector('i');
+      const isPlaying = icon.classList.contains('fa-pause');
+      socket.send(JSON.stringify({ spotify_command: isPlaying ? 'pause' : 'play' }));
+      icon.className = isPlaying ? 'fas fa-play' : 'fas fa-pause';
+    });
+    document.getElementById('spotify-prev').addEventListener('click', () => socket.send(JSON.stringify({ spotify_command: 'prev' })));
+    document.getElementById('spotify-next').addEventListener('click', () => socket.send(JSON.stringify({ spotify_command: 'next' })));
+    
+    function atualizarRelogio() {
+      const agora = new Date();
+      document.getElementById('relogio_valor').textContent = agora.toLocaleTimeString('pt-BR');
+      document.getElementById('data_valor').textContent = agora.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+    }
+    setInterval(atualizarRelogio, 1000); atualizarRelogio();
+    atualizarTemaDuna(currentMode);
+  </script>
+</body>
+</html>
