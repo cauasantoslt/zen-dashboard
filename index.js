@@ -199,7 +199,7 @@ wss.on('connection', (ws) => {
     else if (data.spotify_command !== undefined) {
       
         // --- VERIFICAÇÃO DE SENHA ---
-        const SENHA_SECRETA = "duna123"; // <--- A SUA SENHA AQUI
+        const SENHA_SECRETA = process.env.SPOTIFY_CONTROL_PASSWORD; // <--- A SUA SENHA AQUI
         
         if (data.password !== SENHA_SECRETA) {
           console.log("Tentativa de comando Spotify com senha errada.");
