@@ -3,17 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Essencial para as imagens do Imgur carregarem -->
   <meta name="referrer" content="no-referrer">
-  <title>Zen Dashboard (Final)</title>
+  <title>Zen Dashboard (Glass UI)</title>
+  
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- LINK CORRIGIDO PARA OS ÍCONES (FONT AWESOME) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="mode-sietch">
   
   <div class="dashboard-grid">
 
+    <!-- COLUNA ESQUERDA -->
     <div class="coluna-esquerda">
       
+      <!-- 1. SPOTIFY -->
       <div id="spotify-widget" class="widget glass-panel">
         <div class="widget-header">
           <h2><i class="fab fa-spotify"></i> Spotify <span></span></h2>
@@ -38,11 +43,13 @@
         </div>
       </div>
 
+      <!-- 2. SENSORES -->
       <div id="sensores-widget" class="widget glass-panel">
         <div class="widget-header">
           <h2>Sensores <span></span></h2>
         </div>
         <div class="sensor-list">
+          <!-- Luz -->
           <div class="sensor-card" id="box-luz">
             <div class="icon-area"><i class="fas fa-lightbulb"></i></div>
             <div class="info-area">
@@ -50,6 +57,7 @@
               <span id="luz_valor" class="valor">--</span>
             </div>
           </div>
+          <!-- Modo -->
           <div class="sensor-card highlight-card" id="box-mode">
             <div class="icon-area"><i class="fas fa-mountain"></i></div>
             <div class="info-area">
@@ -57,6 +65,7 @@
               <span id="mode_status" class="valor">--</span>
             </div>
           </div>
+          <!-- Temp -->
           <div class="sensor-card" id="box-temp">
             <div class="icon-area"><i class="fas fa-temperature-high"></i></div>
             <div class="info-area">
@@ -64,6 +73,7 @@
               <span class="valor"><span id="temp_valor">--</span>°C</span>
             </div>
           </div>
+          <!-- Humidade -->
           <div class="sensor-card" id="box-hum">
             <div class="icon-area"><i class="fas fa-tint"></i></div>
             <div class="info-area">
@@ -71,6 +81,7 @@
               <span class="valor"><span id="hum_valor">--</span>%</span>
             </div>
           </div>
+          <!-- Relógio (Fundo da lista) -->
           <div class="sensor-card clock-card" id="box-relogio">
             <div class="info-area">
               <span class="label"><i class="far fa-clock"></i> Relógio</span>
@@ -82,8 +93,10 @@
       </div> 
     </div>
 
+    <!-- COLUNA DIREITA -->
     <div class="coluna-direita">
       
+      <!-- CHAT -->
       <div id="chat-widget" class="widget glass-panel">
         <div class="widget-header">
           <h2>Alpha Centauri <span></span></h2>
@@ -99,6 +112,7 @@
         </div>
       </div>
 
+      <!-- FOTO -->
       <div id="foto-widget" class="widget glass-panel">
         <div class="widget-header">
           <h2>Visualização <span></span></h2>
@@ -109,9 +123,11 @@
       </div>
 
     </div> 
+
   </div>
 
   <script>
+    // --- REFERÊNCIAS ---
     const chatMessages = document.getElementById('chat-messages');
     const chatInput = document.getElementById('chat-input');
     const chatSendButton = document.getElementById('chat-send');
@@ -120,13 +136,14 @@
     const spotifyPlayPause = document.getElementById('spotify-play-pause');
     const dunaImage = document.getElementById('duna-image');
 
+    // --- CONFIGURAÇÃO DAS FOTOS ---
     const fotosDuna = {
       Sietch: ["https://i.imgur.com/QXyJjWU.jpeg", "https://i.imgur.com/3efJvFJ.jpeg", "https://i.imgur.com/lOt6QYO.jpeg"],
       Arrakis: ["https://i.imgur.com/ldqDTOJ.jpeg", "https://i.imgur.com/nA974t8.jpeg", "https://i.imgur.com/Jsg2dpi.jpeg"],
       Atreides: ["https://i.imgur.com/HwidxCi.jpeg", "https://i.imgur.com/9xT18cO.jpeg", "https://i.imgur.com/s1A3ehb.jpeg"]
     };
 
-    // WebSocket: Usa o protocolo seguro (wss) se estiver em HTTPS (Render), ou ws se for local
+    // --- WEBSOCKET ---
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
     const socket = new WebSocket(`${protocol}://${window.location.host}`);
     
@@ -139,11 +156,17 @@
       else if (data.sender === "Servidor") { adicionarMensagemChat("server", data.message); }
       else if (data.sender === "Spotify") { atualizarSpotify(data); }
       else if (data.sender === "IA_Status") { atualizarIAStatus(data.status); }
+      else if (data.error) { 
+        alert("⛔ " + data.error); 
+        userPassword = ""; 
+      } 
     };
 
+    // --- ATUALIZAÇÃO DE SENSORES ---
     function atualizarSensores(data) {
       const tempEl = document.getElementById('temp_valor');
       const humEl = document.getElementById('hum_valor');
+      
       if (data.temp === null || data.temp === undefined) {
         tempEl.textContent = "--"; humEl.textContent = "--";
       } else {
@@ -179,7 +202,10 @@
 
       const lista = fotosDuna[novoModo];
       if (lista && lista.length > 0) {
-        if (dunaImage) dunaImage.src = lista[Math.floor(Math.random() * lista.length)];
+        if (dunaImage) {
+            const randomImg = lista[Math.floor(Math.random() * lista.length)];
+            dunaImage.src = randomImg;
+        }
       }
     }
 
@@ -190,6 +216,7 @@
         document.getElementById('spotify-track-name').textContent = data.name;
         document.getElementById('spotify-artist-name').textContent = data.artist;
         document.getElementById('spotify-album-image').src = data.image_url;
+        
         const icon = spotifyPlayPause.querySelector('i');
         icon.className = data.is_playing ? 'fas fa-pause' : 'fas fa-play';
       } else {
@@ -198,6 +225,7 @@
       }
     }
     
+    // --- CHAT ---
     function adicionarMensagemChat(tipo, msg) {
       let classe = tipo === 'user' ? 'message-user' : (tipo === 'ia' ? 'message-ia' : 'message-server');
       let prefixo = tipo === 'ia' ? '<i class="fas fa-star"></i> ' : ''; 
@@ -220,24 +248,47 @@
       document.getElementById('ia_status_text').textContent = status;
     }
     
+    // --- SEGURANÇA SPOTIFY ---
+    let userPassword = ""; 
+
+    function enviarComandoSpotify(comando) {
+      if (!userPassword) {
+        userPassword = prompt("🔒 Painel Protegido. Digite a senha de controlo:");
+        if (!userPassword) return; 
+      }
+
+      socket.send(JSON.stringify({ 
+        spotify_command: comando,
+        password: userPassword 
+      }));
+    }
+
+    // --- LISTENERS ---
     chatSendButton.addEventListener('click', enviarMensagemChat);
     chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') enviarMensagemChat(); });
 
     document.getElementById('spotify-play-pause').addEventListener('click', () => {
       const icon = spotifyPlayPause.querySelector('i');
       const isPlaying = icon.classList.contains('fa-pause');
-      socket.send(JSON.stringify({ spotify_command: isPlaying ? 'pause' : 'play' }));
+      
+      enviarComandoSpotify(isPlaying ? 'pause' : 'play');
+      
+      // Atualização otimista 
       icon.className = isPlaying ? 'fas fa-play' : 'fas fa-pause';
     });
-    document.getElementById('spotify-prev').addEventListener('click', () => socket.send(JSON.stringify({ spotify_command: 'prev' })));
-    document.getElementById('spotify-next').addEventListener('click', () => socket.send(JSON.stringify({ spotify_command: 'next' })));
+
+    document.getElementById('spotify-prev').addEventListener('click', () => enviarComandoSpotify('prev'));
+    document.getElementById('spotify-next').addEventListener('click', () => enviarComandoSpotify('next'));
     
+    // --- RELÓGIO ---
     function atualizarRelogio() {
       const agora = new Date();
       document.getElementById('relogio_valor').textContent = agora.toLocaleTimeString('pt-BR');
       document.getElementById('data_valor').textContent = agora.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
     }
     setInterval(atualizarRelogio, 1000); atualizarRelogio();
+    
+    // Inicia o tema
     atualizarTemaDuna(currentMode);
   </script>
 </body>
